@@ -9,21 +9,18 @@ from scipy.stats import ttest_ind
 st.set_page_config(page_title="Stat Misconceptions Lab", layout="centered")
 
 st.title("🧠 Stat Misconceptions Lab")
-st.write("Answer first. Then test your intuition with simulation.")
+st.write("Answer the question first, then explore the simulation.")
 
 # ---------------------------
 # SESSION STATE
 # ---------------------------
-if "q" not in st.session_state:
-    st.session_state.q = 0
-if "show_answer" not in st.session_state:
-    st.session_state.show_answer = False
+if "answered" not in st.session_state:
+    st.session_state.answered = False
 
 # ---------------------------
-# SIMULATION FUNCTION (Q1)
+# SIMULATION (Q1)
 # ---------------------------
-
-def simulate_posterior_null():
+def run_simulation():
     st.write("### Simulation")
 
     st.write(
@@ -63,10 +60,10 @@ Let’s test that.
     results = np.array(results)
 
     if len(results) == 0:
-        st.write("No significant results in this simulation.")
+        st.write("No significant results—try increasing sample size or effect.")
         return
 
-    # -------- BAR CHART --------
+    # Bar chart
     n_total = len(results)
     n_null_true = np.sum(results)
     n_null_false = n_total - n_null_true
@@ -83,15 +80,13 @@ Let’s test that.
 
     st.pyplot(fig)
 
-    # Key number
-    st.write(f"Fraction of significant results where null is true: {n_null_true / n_total:.2f}")
+    st.write(f"Fraction where null is actually true: {n_null_true / n_total:.2f}")
 
-    # Explanation
     st.write(
         """
-These are all studies with statistically significant results.
+These are all statistically significant results.
 
-But some of them are false positives—cases where the null hypothesis was actually true.
+But some are false positives—cases where the null hypothesis was actually true.
 
 If the p-value were the probability that the null is true,  
 the "Null TRUE" bar should be near zero.
@@ -103,17 +98,34 @@ So a p-value cannot be the probability that the null hypothesis is true.
     )
 
 # ---------------------------
-# QUESTIONS
+# QUESTION
 # ---------------------------
 
-questions = [
-    {
-        "section": "P-Values",
-        "prompt": "The p-value tells you the probability that the null hypothesis is true.",
-        "correct": "False",
-        "explanation": """
-This is false.
+st.subheader("P-Values")
+st.write("**Question 1**")
 
+st.write(
+    "The p-value tells you the probability that the null hypothesis is true."
+)
+
+answer = st.radio("True or False?", ["True", "False"])
+
+# Submit
+if st.button("Submit"):
+    st.session_state.answered = True
+
+# Show results only after answering
+if st.session_state.answered:
+
+    st.write("**Correct answer: False**")
+
+    if answer == "False":
+        st.write("✅ Correct")
+    else:
+        st.write("❌ Not quite")
+
+    st.write(
+        """
 A p-value is not the probability that the null hypothesis is true.
 
 A p-value tells you how surprising your data would be if the null hypothesis were true.
@@ -122,46 +134,14 @@ To get the probability that the null is true, you would also need:
 - how often the null is true to begin with, and  
 - how likely you are to detect real effects.
 
-This is the same kind of mistake as saying you know the probability that your conclusion is wrong or that the alternative hypothesis is true.
-""",
-        "simulation": simulate_posterior_null,
-    }
-]
-
-# ---------------------------
-# MAIN FLOW
-# ---------------------------
-
-# Safety fix
-if st.session_state.q >= len(questions):
-    st.session_state.q = 0
-
-q = questions[st.session_state.q]
-
-st.subheader(q["section"])
-st.write(f"Question {st.session_state.q + 1}")
-st.write(q["prompt"])
-
-# Answer choice
-answer = st.radio("True or False?", ["True", "False"], key="q1")
-
-# Submit button
-if st.button("Submit"):
-    st.session_state.show_answer = True
-
-# ONLY show after submit
-if st.session_state.show_answer:
-
-    st.write(f"**Correct answer: {q['correct']}**")
-
-    # Optional: show whether student was right
-    if answer == q["correct"]:
-        st.write("✅ Correct")
-    else:
-        st.write("❌ Not quite")
-
-    st.write(q["explanation"])
+This is the same mistake as saying you know the probability that your conclusion is wrong or that the alternative hypothesis is true.
+"""
+    )
 
     st.write("---")
 
-    q["simulation"]()
+    run_simulation()
+
+# Reset button (useful while building)
+if st.button("Reset"):
+    st.session_state.answered = False
