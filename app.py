@@ -33,9 +33,9 @@ Let’s test that.
     )
 
     # Controls
-    prior_null = st.slider("Probability null is true", 0.0, 1.0, 0.5)
-    n = st.slider("Sample size per group", 10, 100, 30)
-    effect = st.slider("Effect size if null is false", 0.0, 1.5, 0.5)
+    prior_null = st.slider("Probability null is true", 0.0, 1.0, 0.9)
+    n = st.slider("Sample size per group", 10, 100, 20)
+    effect = st.slider("Effect size if null is false", 0.0, 1.5, 0.3)
 
     n_sims = 1000
     alpha = 0.05
