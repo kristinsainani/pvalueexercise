@@ -20,21 +20,21 @@ if "answered" not in st.session_state:
     st.session_state.answered = False
 
 # ---------------------------
-# SIMULATION (shared)
+# SIMULATION 1 (Q1 & Q2)
 # ---------------------------
-def run_simulation():
+def simulation_false_positive():
+
     st.write("### Simulation")
 
     st.write(
         """
-If the p-value were telling you the probability you're wrong,  
+If the p-value told you the probability that the null is true or that you're wrong,  
 then false positives should be very rare among significant results.
 
 Let’s test that.
 """
     )
 
-    # Strong defaults (many false positives)
     prior_null = st.slider("Probability null is true", 0.0, 1.0, 0.9)
     n = st.slider("Sample size per group", 10, 100, 20)
     effect = st.slider("Effect size if null is false", 0.0, 1.5, 0.3)
@@ -65,7 +65,6 @@ Let’s test that.
         st.write("No significant results—try adjusting settings.")
         return
 
-    # Bar chart
     n_total = len(results)
     n_null_true = np.sum(results)
     n_null_false = n_total - n_null_true
@@ -76,7 +75,6 @@ Let’s test that.
     values = [n_null_true, n_null_false]
 
     ax.bar(labels, values)
-
     ax.set_title("Among Significant Results (p < 0.05)")
     ax.set_ylabel("Number of studies")
 
@@ -96,6 +94,62 @@ there can still be a substantial chance that you're wrong.
     )
 
 # ---------------------------
+# SIMULATION 2 (Q3)
+# ---------------------------
+def simulation_replication():
+
+    st.write("### Simulation")
+
+    st.write(
+        """
+If a significant result guaranteed replication,  
+then repeated studies should almost always be significant.
+
+Let’s test that.
+"""
+    )
+
+    n = st.slider("Sample size per group", 10, 100, 30)
+    effect = st.slider("True effect size", 0.0, 1.5, 0.5)
+
+    n_sims = 500
+    alpha = 0.05
+
+    significant = []
+
+    for _ in range(n_sims):
+        g1 = np.random.normal(effect, 1, n)
+        g2 = np.random.normal(0, 1, n)
+
+        _, p = ttest_ind(g1, g2)
+        significant.append(p < alpha)
+
+    significant = np.array(significant)
+
+    prop_sig = np.mean(significant)
+
+    fig, ax = plt.subplots()
+
+    labels = ["Significant", "Not Significant"]
+    values = [np.sum(significant), np.sum(~significant)]
+
+    ax.bar(labels, values)
+    ax.set_title("Results Across Repeated Studies")
+    ax.set_ylabel("Number of studies")
+
+    st.pyplot(fig)
+
+    st.write(f"Proportion significant: {prop_sig:.2f}")
+
+    st.write(
+        """
+Even with a real effect, not all studies are significant.
+
+So a single significant result does not mean future studies will almost always replicate.
+"""
+    )
+
+# ---------------------------
 # QUESTIONS
 # ---------------------------
 questions = [
@@ -108,14 +162,11 @@ questions = [
         "explanation": """
 A p-value is not the probability that the null hypothesis is true.
 
-A p-value tells you how surprising your data would be if the null hypothesis were true.
+It tells you how surprising your data would be if the null hypothesis were true.
 
-To get the probability that the null is true, you would also need:
-- how often the null is true to begin with, and  
-- how likely you are to detect real effects.
-
-This is the same mistake as saying you know the probability that your conclusion is wrong or that the alternative hypothesis is true.
-"""
+This is the same mistake as saying you know the probability you're wrong or that the alternative hypothesis is true.
+""",
+        "simulation": simulation_false_positive
     },
 
     # Q2
@@ -124,21 +175,31 @@ This is the same mistake as saying you know the probability that your conclusion
         "prompt": "If you reject the null hypothesis, you know the probability that you are making the wrong decision.",
         "correct": "False",
         "explanation": """
-This is false.
-
 A p-value does not tell you the probability that your conclusion is wrong.
 
-The simulation shows that among statistically significant results,  
-a noticeable fraction can still be false positives.
+The simulation shows that among significant results,  
+some are still false positives.
 
-That fraction depends on:
-- how often the null is true, and  
-- how much power your study has.
+This is the same mistake as saying you know:
+- the probability the null is true, or  
+- the probability the alternative is true.
+""",
+        "simulation": simulation_false_positive
+    },
 
-This is the same kind of mistake as saying you know:
-- the probability that the null hypothesis is true, or  
-- the probability that the alternative hypothesis is true (statement 4).
-"""
+    # Q3
+    {
+        "section": "P-Values",
+        "prompt": "If a result is significant at p = 0.01, then repeated studies will be significant about 99% of the time.",
+        "correct": "False",
+        "explanation": """
+A p-value does not tell you how often results will replicate.
+
+Even when a real effect exists, results vary from study to study.
+
+So a single significant result does not guarantee consistent replication.
+""",
+        "simulation": simulation_replication
     }
 
 ]
@@ -147,7 +208,6 @@ This is the same kind of mistake as saying you know:
 # MAIN FLOW
 # ---------------------------
 
-# Safety reset
 if st.session_state.q >= len(questions):
     st.session_state.q = 0
 
@@ -159,11 +219,9 @@ st.write(q["prompt"])
 
 answer = st.radio("True or False?", ["True", "False"], key=f"q{st.session_state.q}")
 
-# Submit
 if st.button("Submit"):
     st.session_state.answered = True
 
-# Show after answering
 if st.session_state.answered:
 
     st.write(f"**Correct answer: {q['correct']}**")
@@ -177,15 +235,13 @@ if st.session_state.answered:
 
     st.write("---")
 
-    run_simulation()
+    q["simulation"]()
 
-    # Next button
     if st.session_state.q < len(questions) - 1:
         if st.button("Next Question"):
             st.session_state.q += 1
             st.session_state.answered = False
 
-# Reset button
 if st.button("Reset"):
     st.session_state.q = 0
     st.session_state.answered = False
