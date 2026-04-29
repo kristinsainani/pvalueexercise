@@ -97,7 +97,7 @@ So a p-value cannot be the probability that the null hypothesis is true.
     )
 
 # ---------------------------
-# QUESTIONS (START WITH 1)
+# QUESTIONS
 # ---------------------------
 
 questions = [
@@ -125,6 +125,10 @@ This is the same kind of mistake as saying you know the probability that your co
 # ---------------------------
 # MAIN FLOW
 # ---------------------------
+
+# Safety fix for index errors
+if st.session_state.q >= len(questions):
+    st.session_state.q = 0
 
 q = questions[st.session_state.q]
 
