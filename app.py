@@ -126,7 +126,7 @@ This is the same kind of mistake as saying you know the probability that your co
 # MAIN FLOW
 # ---------------------------
 
-# Safety fix for index errors
+# Safety fix
 if st.session_state.q >= len(questions):
     st.session_state.q = 0
 
@@ -136,14 +136,26 @@ st.subheader(q["section"])
 st.write(f"Question {st.session_state.q + 1}")
 st.write(q["prompt"])
 
+# Answer choice
 answer = st.radio("True or False?", ["True", "False"], key="q1")
 
+# Submit button
 if st.button("Submit"):
     st.session_state.show_answer = True
 
+# ONLY show after submit
 if st.session_state.show_answer:
+
     st.write(f"**Correct answer: {q['correct']}**")
+
+    # Optional: show whether student was right
+    if answer == q["correct"]:
+        st.write("✅ Correct")
+    else:
+        st.write("❌ Not quite")
+
     st.write(q["explanation"])
 
     st.write("---")
+
     q["simulation"]()
