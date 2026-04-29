@@ -66,31 +66,37 @@ Let’s test that.
         st.write("No significant results in this simulation.")
         return
 
-    false_rate = np.mean(results)
+    # -------- BAR CHART --------
+    n_total = len(results)
+    n_null_true = np.sum(results)
+    n_null_false = n_total - n_null_true
 
-    st.write(f"Fraction of significant results where the null is actually true: {false_rate:.2f}")
-
-    # Dot plot
     fig, ax = plt.subplots()
 
-    x = np.arange(len(results))
-    y = np.zeros(len(results))
+    labels = ["Null TRUE\n(False Positives)", "Null FALSE\n(True Effects)"]
+    values = [n_null_true, n_null_false]
 
-    colors = ["red" if r else "green" for r in results]
+    ax.bar(labels, values)
 
-    ax.scatter(x, y, c=colors, s=10)
-
-    ax.set_yticks([])
-    ax.set_xlabel("Each dot = a significant study")
-    ax.set_title("Red = null was TRUE, Green = null was FALSE")
+    ax.set_title("Among Significant Results (p < 0.05)")
+    ax.set_ylabel("Number of studies")
 
     st.pyplot(fig)
 
+    # Key number
+    st.write(f"Fraction of significant results where null is true: {n_null_true / n_total:.2f}")
+
+    # Explanation
     st.write(
         """
-These are all “significant” results.
+These are all studies with statistically significant results.
 
-But some of them happened when the null hypothesis was actually true.
+But some of them are false positives—cases where the null hypothesis was actually true.
+
+If the p-value were the probability that the null is true,  
+the "Null TRUE" bar should be near zero.
+
+But it isn’t.
 
 So a p-value cannot be the probability that the null hypothesis is true.
 """
